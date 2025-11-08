@@ -46,29 +46,29 @@ export default function HuntersSqlScreen() {
     setModalVisible(true);
   };
 
-const saveHunter = async () => {
-  if (!currentHunter) return;
+  const saveHunter = async () => {
+    if (!currentHunter) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    if (modalMode === "edit") {
-      await updateHunterSql(currentHunter.id, currentHunter);
+      if (modalMode === "edit") {
+        await updateHunterSql(currentHunter.id, currentHunter);
+      }
+      if (modalMode === "create") {
+        const newId = hunters.length > 0 ? Math.max(...hunters.map(h => h.id)) + 1 : 1;
+        currentHunter.id = newId;
+        await createHunterSql(currentHunter);
+      }
+
+      await fetchAllHunters();
+      setModalVisible(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    if (modalMode === "create") {
-      const newId = hunters.length > 0 ? Math.max(...hunters.map(h => h.id)) + 1 : 1;
-      currentHunter.id = newId;
-      await createHunterSql(currentHunter);
-    }
-
-    await fetchAllHunters();
-    setModalVisible(false);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const openDeleteModal = (hunter: HunterSql) => {
@@ -144,14 +144,20 @@ const saveHunter = async () => {
                   style={styles.input}
                   placeholder={field}
                   value={(currentHunter as any)[field]?.toString()}
-                  onChangeText={(text) =>
-                    setCurrentHunter({
-                      ...currentHunter,
-                      [field]:
-                        field === "edad" || field.includes("cm") || field.includes("kg") ? Number(text) : text,
-                    })
-                  }
+
                   editable={modalMode !== "view"}
+                  onChangeText={(text) => {
+                    let value: string | number = text
+                    if (field === "edad" || field.includes("cm") || field.includes("kg")) {
+                      if (/^\d*$/.test(text)) {
+                        value = text === "" ? "" : Number(text)
+                      } else {
+                        return
+                      }
+                    }
+
+                    setCurrentHunter({ ...currentHunter, [field]: value })
+                  }}
                 />
               ))}
 

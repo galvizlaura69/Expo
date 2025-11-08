@@ -14,10 +14,10 @@ export default function HuntersScreen() {
   const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
 
   const generateGuid = () => {
-  return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[x]/g, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  );
-};
+    return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[x]/g, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    );
+  };
 
 
   const fetchAllHunters = async () => {
@@ -40,7 +40,6 @@ export default function HuntersScreen() {
     if (hunter) setCurrentHunter(hunter);
     else
       setCurrentHunter({
-        _id: "",
         nombre: "",
         edad: 0,
         altura_cm: 0,
@@ -53,28 +52,27 @@ export default function HuntersScreen() {
     setModalVisible(true);
   };
 
-const saveHunter = async () => { 
-  if (!currentHunter) return;
-  try {
-    setLoading(true);
+  const saveHunter = async () => {
+    if (!currentHunter) return;
+    try {
+      setLoading(true);
+      const { _id, ...dataToSend } = currentHunter
+      if (modalMode === "edit" && currentHunter.nombre) {
+        await updateHunter(currentHunter.nombre, dataToSend);
+      }
 
-    if (modalMode === "edit" && currentHunter._id) {
-      await updateHunter(currentHunter._id, currentHunter);
+      if (modalMode === "create") {
+        await createHunter(currentHunter);
+      }
+
+      await fetchAllHunters();
+      setModalVisible(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    if (modalMode === "create") {
-      currentHunter._id = generateGuid();
-      await createHunter(currentHunter);
-    }
-
-    await fetchAllHunters();
-    setModalVisible(false);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const openDeleteModal = (hunter: Hunter) => {
@@ -83,10 +81,10 @@ const saveHunter = async () => {
   };
 
   const handleDelete = async () => {
-    if (!currentHunter?._id) return;
+    if (!currentHunter?.nombre) return;
     try {
       setLoading(true);
-      await deleteHunter(currentHunter._id);
+      await deleteHunter(currentHunter.nombre);
       await fetchAllHunters();
       setDeleteModalVisible(false);
     } catch (err) {
@@ -115,7 +113,7 @@ const saveHunter = async () => {
 
       <FlatList
         data={hunters}
-        keyExtractor={(item) => item._id || Math.random().toString()}
+        keyExtractor={(item) => item.nombre || Math.random().toString()}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Text style={styles.name}>{item.nombre}</Text>
@@ -150,14 +148,19 @@ const saveHunter = async () => {
                   style={styles.input}
                   placeholder={field}
                   value={(currentHunter as any)[field]?.toString()}
-                  onChangeText={(text) =>
-                    setCurrentHunter({
-                      ...currentHunter,
-                      [field]:
-                        field === "edad" || field.includes("cm") || field.includes("kg") ? Number(text) : text,
-                    })
-                  }
                   editable={modalMode !== "view"}
+                  onChangeText={(text) => {
+                    let value: string | number = text
+                    if (field === "edad" || field.includes("cm") || field.includes("kg")) {
+                      if (/^\d*$/.test(text)) {
+                        value = text === "" ? "" : Number(text)
+                      } else {
+                        return
+                      }
+                    }
+
+                    setCurrentHunter({ ...currentHunter, [field]: value })
+                  }}
                 />
               ))}
 

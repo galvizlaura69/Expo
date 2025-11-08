@@ -43,22 +43,22 @@ export const createHunter = async (hunterData: Hunter): Promise<Hunter> => {
   }
 };
 
-export const updateHunter = async (id: string, hunterData: Hunter): Promise<Hunter> => {
+export const updateHunter = async (name: string, hunterData: Hunter): Promise<Hunter> => {
   try {
-    const response = await axios.put<Hunter>(`${API_URL}/${id}`, hunterData);
+    const response = await axios.put<Hunter>(`${API_URL}/${name}`, hunterData);
     return response.data;
   } catch (error) {
-    console.error(`Error actualizando el hunter ${id}:`, error);
+    console.error(`Error actualizando el hunter ${name}:`, error);
     throw error;
   }
 };
 
-export const deleteHunter = async (id: string): Promise<{ message: string }> => {
+export const deleteHunter = async (name: string): Promise<{ message: string }> => {
   try {
-    const response = await axios.delete<{ message: string }>(`${API_URL}/${id}`);
+    const response = await axios.delete<{ message: string }>(`${API_URL}/${name}`);
     return response.data;
   } catch (error) {
-    console.error(`Error eliminando el hunter ${id}:`, error);
+    console.error(`Error eliminando el hunter ${name}:`, error);
     throw error;
   }
 };
