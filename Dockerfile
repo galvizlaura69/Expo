@@ -1,18 +1,25 @@
-# Etapa de construcción
+# Etapa 1: Construcción
 FROM node:18 AS builder
-WORKDIR /src
+WORKDIR /app
 
-# Copiamos archivos y dependencias
+# Copiamos los archivos base
 COPY package*.json ./
 RUN npm install
 
-# Copiamos el resto del código y construimos
+# Copiamos el resto del proyecto
 COPY . .
+
+# Compilamos para web
 RUN npx expo export --platform web
 
-# Etapa de despliegue
+# Etapa 2: Servidor
 FROM nginx:alpine
+
+# Copiamos los archivos compilados al servidor de Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Exponemos el puerto 80
 EXPOSE 80
+
+# Iniciamos Nginx
 CMD ["nginx", "-g", "daemon off;"]
