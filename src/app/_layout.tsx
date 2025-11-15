@@ -1,16 +1,16 @@
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SaintProvider } from "../context/SaintContext";
+import { UserProvider } from "../context/userContext";
 
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView>
-      <SaintProvider>
+      <UserProvider>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
-      </SaintProvider>
+      </UserProvider>
     </GestureHandlerRootView>
   );
 }

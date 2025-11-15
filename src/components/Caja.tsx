@@ -37,7 +37,7 @@ export default function Caja({ onChange, resetSignal }: Props) {
     <View style={styles.container}>
       <View style={styles.inputWrapper}>
         <TextInput
-          placeholder="Escribe el nombre del Animal"
+          placeholder="Escribe"
           value={nombre}
           onChangeText={handleChange}
           style={styles.input}

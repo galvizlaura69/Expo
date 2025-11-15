@@ -1,191 +1,28 @@
 import Button from "@/src/components/Button";
-import GestureImageViewer from "@/src/components/GestureImageViewer";
-import { createHunter, deleteHunter, getAllHunters, getHunterByName, Hunter, updateHunter } from "@/src/services/hunterService";
-import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Caja from "@/src/components/Caja";
+import { useUserContext } from "@/src/context/userContext";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
-export default function HuntersScreen() {
-  const [hunters, setHunters] = useState<Hunter[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [currentHunter, setCurrentHunter] = useState<Hunter | null>(null);
-  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
-
-  const generateGuid = () => {
-    return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[x]/g, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    );
-  };
+export default function Index() {
 
 
-  const fetchAllHunters = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllHunters();
-      setHunters(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [name, setName] = useState("")
+  const [resetSignal, setResetSignal] = useState(false)
+  const { setUser } = useUserContext()
 
-  useEffect(() => {
-    fetchAllHunters();
-  }, []);
-
-  const openModal = (mode: "view" | "edit" | "create", hunter?: Hunter) => {
-    if (hunter) setCurrentHunter(hunter);
-    else
-      setCurrentHunter({
-        nombre: "",
-        edad: 0,
-        altura_cm: 0,
-        peso_kg: 0,
-        imagen: "",
-        habilidad: "",
-        tipoNen: "",
-      });
-    setModalMode(mode);
-    setModalVisible(true);
-  };
-
-  const saveHunter = async () => {
-    if (!currentHunter) return;
-    try {
-      setLoading(true);
-      const { _id, ...dataToSend } = currentHunter
-      if (modalMode === "edit" && currentHunter.nombre) {
-        await updateHunter(currentHunter.nombre, dataToSend);
-      }
-
-      if (modalMode === "create") {
-        await createHunter(currentHunter);
-      }
-
-      await fetchAllHunters();
-      setModalVisible(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const openDeleteModal = (hunter: Hunter) => {
-    setCurrentHunter(hunter);
-    setDeleteModalVisible(true);
-  };
-
-  const handleDelete = async () => {
-    if (!currentHunter?.nombre) return;
-    try {
-      setLoading(true);
-      await deleteHunter(currentHunter.nombre);
-      await fetchAllHunters();
-      setDeleteModalVisible(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleView = async (nombre: string) => {
-    try {
-      setLoading(true);
-      const hunter = await getHunterByName(nombre);
-      setCurrentHunter(hunter);
-      openModal("view", hunter);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const handleChange = () => {
+    setUser({
+      name: name,
+    })
+    alert("Nombre agregado")
+    setName("")
+    setResetSignal(true)
+  }
   return (
     <View style={styles.container}>
-      {loading && <ActivityIndicator size="large" color="#fff" />}
-
-      <FlatList
-        data={hunters}
-        keyExtractor={(item) => item.nombre || Math.random().toString()}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.name}>{item.nombre}</Text>
-            <View style={styles.icons}>
-              <TouchableOpacity onPress={() => handleView(item.nombre)}>
-                <Ionicons name="eye" size={24} color="#4caf50" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => openModal("edit", item)}>
-                <Ionicons name="pencil" size={24} color="#2196f3" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => openDeleteModal(item)}>
-                <Ionicons name="trash" size={24} color="#f44336" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      />
-
-      <Button label="Crear Hunter" size="sm" onPress={() => openModal("create")} />
-
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={styles.title}>
-              {modalMode === "view" ? "Ver Hunter" : modalMode === "edit" ? "Editar Hunter" : "Crear Hunter"}
-            </Text>
-
-            {currentHunter &&
-              ["nombre", "edad", "altura_cm", "peso_kg", "habilidad", "tipoNen", "imagen"].map((field) => (
-                <TextInput
-                  key={field}
-                  style={styles.input}
-                  placeholder={field}
-                  value={(currentHunter as any)[field]?.toString()}
-                  editable={modalMode !== "view"}
-                  onChangeText={(text) => {
-                    let value: string | number = text
-                    if (field === "edad" || field.includes("cm") || field.includes("kg")) {
-                      if (/^\d*$/.test(text)) {
-                        value = text === "" ? "" : Number(text)
-                      } else {
-                        return
-                      }
-                    }
-
-                    setCurrentHunter({ ...currentHunter, [field]: value })
-                  }}
-                />
-              ))}
-
-            {currentHunter?.imagen && modalMode !== "create" && <GestureImageViewer source={currentHunter.imagen} />}
-
-            <View style={styles.modalButtons}>
-              <Button label="Cancelar" size="xs" theme="secondary" onPress={() => setModalVisible(false)} />
-              {modalMode !== "view" && <Button label="Guardar" size="xs" onPress={saveHunter} />}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
-
-      <Modal visible={deleteModalVisible} animationType="fade" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.title}>Eliminar Hunter</Text>
-            <Text style={styles.confirmText}>¿Seguro que quieres eliminar este hunter?</Text>
-            <View style={styles.modalButtons}>
-              <Button label="Cancelar" size="xs" theme="secondary" onPress={() => setDeleteModalVisible(false)} />
-              <Button label="Eliminar" size="xs" onPress={handleDelete} />
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <Caja onChange={(e) => setName(e)} resetSignal={resetSignal} />
+      <Button onPress={handleChange} label="Agregar nombre" theme="primary" />
     </View>
   );
 }
